@@ -1,0 +1,470 @@
+---
+title: "Multilevel Analysis"
+author: "Roma Siugzdaite"
+date: "2025-05-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**StatUa**
+University of Antwerp, Belgium
+
+**Main References:**
+Verbeke, G. and Molenberghs, G. (2000). Linear Mixed Models for Longitudinal Data. Springer Series in Statistics. New-York: Springer.
+Molenberghs, G. and Verbeke, G. (2005). Models for Discrete Longitudinal Data. New York: Springer-Verlag.
+Fitzmaurice, G.M., Laird, N.M., and Ware J.H. (2004). Applied Longitudinal Analysis. Hoboken, New Jersey: John Wiley & Sons.
+
+**Additional References:**
+Demidenko, E. (2004). Mixed Models: Theory and Applications. New York: John Wiley & Sons.
+Littell, R.C., Milliken, G.A., Stroup, W.W., Wolfinger, R.D., and Schabenberger, O. (2005). SAS for Mixed Models (2nd ed.). Cary: SAS Press.
+Verbeke, G. and Molenberghs, G. (1997). Linear Mixed Models In Practice: A SAS Oriented Approach, Lecture Notes in Statistics 126. New-York: Springer.
+West, B.T., Welch, K.B., and Galecki, A.T. (2007). Linear Mixed Models: A Practical Guide Using Statistical Software. Boca Raton: Chapman & Hall/CRC.
+
+## Introduction
+
+### Overview
+
+Data structures:
+  Hierarchical data
+  Correlated data
+  
+Model Families
+
+### Hierarchical data
+
+**Hierarchical data** are obtained when sample is taken at multiple, hierarchically ordered, levels.
+
+**Examples**
+
+* Measurements taken on patients, at multiple visits after their treatment.
+* Growth curves of children, animals, plants, . . .
+* Survey in which all members from each of a sample of families are questioned.
+* Survey in which 10 habitants from each of a sample of cities are questioned.
+* Exam results from students from a sample of schools.
+...
+
+These are examples of two-level data structures, but extensions to multiple levels are possible:
+10 cities
+→ In each: 5 schools
+→ In each: 5 students
+→ Each student given the test twice
+
+Terminologies:
+Repeated Measures 
+Longitudinal Data 
+Multilevel Data
+
+### Correlated data
+
+**Example: Longitudinal Body Weight**
+
+Consider a body weight experiment in which body weight is measured on a daily basis, for a sample of participants.
+
+It is natural to assume body weights from different subjects to be independent from each other.
+
+Body weights measured on the same subject are expected to be correlated.
+
+**Should this correlation be accounted for in the analysis? If yes, how?**
+
+**Example: Comparing BMI between Males and Females**
+
+Suppose interest is in comparing the average BMI between males and females, based on 100 observations from each population.
+  ⇒ Natural analysis: **Two-sample, unpaired t-test**
+
+Suppose the 100 males and 100 females are married couples.
+  • The BMI of spouses is likely to be correlated. 
+  ⇒ Natural analysis: **Paired t-test**
+  
+
+**Conclusion**
+
+Hierarchical data structures often yield data which cannot be assumed independent.
+
+From a statistical perspective, the key issue in modelling hierarchical data is how to account for the association between observations.
+
+Alternative Terminology:
+  Repeated Measures 
+  Longitudinal Data 
+  Multilevel Data 
+  Correlated Data 
+  ...
+  
+### Overview of Models
+
+Since hierarchical data are correlated, all traditional models in statistics need a counterpart for correlated data.
+
+Many different models have been proposed in the statistical literature.
+
+We focus on mixed models which explicitly model the various levels in the data structure.
+
+**Cross-Sectional Data ⇒ Hierarchical Data**
+Linear Regression Models ⇒ Linear Mixed Models
+Generalized Linear Models ⇒ Generalized Linear Mixed Models
+Non-Linear Regression Models ⇒ Non-Linear Mixed Models
+
+## Linear Mixed models
+
+**Motivating Examples**
+The Captopril Data
+The Lizard Data
+The Paired t-Test Revisited
+
+### The Captopril data
+
+
+**Background**
+15 patients with hypertension
+
+The response of interest is the supine blood pressure, before and after treatment with CAPTOPRIL.
+
+Research Question:
+
+**How does treatment affect BP?**
+
+We will be using captopril.txt data
+
+**Codebook:**
+ID - patient identification number
+BP - numerical values of blood pleasure measurements
+MEAS - type of blood pleasure measurements (diastolic (1) or systolic (2)) 
+TIME - after (2) and before (1)
+
+```{r, ECHO =TRUE}
+
+# you need to change the path
+captopril <- read.delim("~/Documents/JOB/UANTWERPEN/FLAMES/Multilevel/Data/captopril.txt", stringsAsFactors=TRUE)
+head(captopril, 3)
+tail(captopril, 3)
+
+```
+Summary statistics on a sample
+
+```{r}
+summary(captopril)
+```
+If I want to see means per group to have an idea about the differences.
+
+## Plot
+
+First make a scatter plot of all data independent from the groups:
+
+```{r, echo=TRUE}
+
+data1 <- subset(captopril, MEAS == "diastolic")
+data2 <- subset(captopril, MEAS == "systolic")
+
+par(mfrow = c(1, 2))
+plot(data1$TIME,data1$BP,type="p",xlab="ID",
+     ylab="BP",main="BP by patient")
+plot(data2$TIME,data2$BP,type="p",xlab="ID",
+     ylab="BP",main="BP by patient")
+
+```
+What is the first impression? 
+
+Ploting changes per type and time:
+
+```{r}
+
+library(ggplot2)
+ggplot(captopril, aes(x = TIME, y = BP, color = factor(MEAS))) +
+  geom_line(aes(group = ID), linewidth = 1/4) +
+  geom_point()+
+  scale_color_viridis_d(end = .75) +
+  coord_cartesian(ylim = c(80, 220)) +
+  theme(legend.position = "none", panel.grid = element_blank()) +
+  facet_wrap(~ MEAS)
+
+```
+
+Consider an analysis of diastolic BP:
+
+Average (mm Hg)
+Diastolic Before: 112.333 
+Diastolic After: 103.067
+
+There is an average decrease of **more than 9 mm HG.**
+
+The classical analysis of paired data is based on comparisons within subjects:
+
+∆i =Yi1 −Yi2, i=1,2,...,15
+
+positive ∆i ⇒ corresponds to a decrease of the BP
+negative ∆i ⇒ corresponds to an increase of the BP
+
+## Paired T-test
+
+Testing for treatment effect is now equivalent to testing whether the
+average difference μ∆ equals zero. 
+
+R output
+
+```{r}
+library(stats)
+## paired t-test
+after <- subset(data1, TIME == "after")
+before <- subset(data1, TIME == "before")
+t.test(after$BP, before$BP, paired = TRUE)
+
+
+## unpaired t-test
+t.test(after$BP, before$BP, paired = FALSE)
+
+```
+
+### Paired vs. Unpaired t-Test
+
+Comparing results from unpaired and paired analysis:
+                                      Unpaired. Paired
+Estimated Difference.              d̄   9.2667   9.2666
+Std. Err. of Estimated Difference  se(d) 4.2214 2.2243
+Test Statistic Value               t    2.20    4.17
+p-value                            p    0.0366    0.0010
+̄
+
+Although both tests lead to a significant result, there is a serious difference in p-values.
+
+⇒ **Ignoring the paired nature of the data can lead to wrong conclusions!**
+
+### Conclusion
+
+**The correlation cannot be ignored in the analysis.**
+
+In the paired t-test, the correlation problem is circumvented by taking within-subject differences,
+
+∆i =Yi1 −Yi2, i=1,2,...,15.
+
+How can this be extended to:
+  multiple measurements per subject? 
+  include covariate information? 
+  multiple levels in the data structure?
+
+
+Make a linear model:
+
+```{r}
+
+library(sjPlot)
+model <- lm(BP~ MEAS + TIME , data = captopril)
+summary(model)
+anova(model)
+
+tab <- tab_model(model)
+tab
+
+```
+
+
+```{r}
+
+library(lme4)
+model2 <- lmer(BP~ MEAS + TIME + (1|ID) , data = captopril)
+summary(model2)
+anova(model2)
+
+tab <- tab_model(model2)
+tab
+
+```
+
+## Lizard data
+
+Background
+
+Data on 102 lizards
+
+Response of Interest: number of dorsal shells 
+
+Research Question:
+
+**Is the number of dorsal shells gender-related?**
+
+Codebook:
+MOTHC: Mother code
+SEX: 1 - male, 2 female
+DORS: number of dorsal shells
+  
+```{r}
+lizard <- read.delim("~/Documents/JOB/UANTWERPEN/FLAMES/Multilevel/Data/lizard.txt")
+head(lizard)
+
+lizard$SEX <- as.factor(lizard$SEX)
+
+```
+
+T-test unpaired
+
+
+```{r}
+t.test(DORS ~ SEX, data = lizard)
+
+plot(DORS ~ SEX, data = lizard, var.equal = FALSE)
+
+```
+A typical aspect of the data is that some animals have the same mother.
+
+We have 102 lizards from 29 mothers. 
+Mother effects might be present.
+
+⇒ **Hence, a comparison between male and female animals should be based on within-mother comparisons.**
+
+### Within mother comparison
+
+```{r}
+plot(DORS~ MOTHC, col = SEX, data = lizard, pch=20)
+
+```
+
+much between-mother variability
+
+often, males (considerably) higher than females
+
+in cases where females higher than males, small differences
+
+### Remarks
+
+The non-significant t-test result may be due to the between-mother variability.
+This is an example of clustered data.
+
+  ⇒ Observations are **clustered** within mothers.
+
+Measurements within mothers can be expected to be more alike than measurements from different mothers.
+
+We expect **correlated observations within mothers and independent observations between mothers.**
+
+How can we correct for differences between mothers?
+
+### Two way ANOVA
+
+An obvious first choice to test for a ‘sex’ effect, correcting for ‘mother’ effects, is a two-way ANOVA with factors ‘sex’ and ‘mother’.
+
+The mother effect then represents the variability between mothers. 
+
+Let Yij be the jth measurement on the ith mother, and let xij be 0
+for males and 1 for females. 
+The model then equals:
+
+Yij =μ+αi +βxij +εij.
+
+Parameter interpretation:
+
+Overall mean: μ
+Gender effect: β is the parameter of interest, the average
+difference between males and females. 
+Mother effect: αi
+
+Since the model is overparameterized, restrictions are needed, e.g.,
+Xαi =0.
+
+Residual distribution:
+εij ∼ N (0, σ2res ).
+
+```{r, ECHO = TRUE}
+# MOTHERS AS A GROUPS - FACTORS
+lizard$MOTHC <- as.factor(lizard$MOTHC)
+
+# if ignore the mothers effect
+# With the t-test, ignoring the mother effect
+model <- lm(DORS ~ SEX, data=lizard)
+summary(model)
+
+# Adding mother's effect
+library(car)
+model <- lm(DORS ~ SEX + MOTHC, data=lizard)
+resultsAnova<-summary(model)
+tab <- tab_model(resultsAnova)
+tab
+
+resultsType3<-Anova(lm(DORS ~ SEX + MOTHC, data=lizard),type=3)
+resultsType3
+
+overallTest<-round(c(resultsAnova$fstatistic,
+    pf(resultsAnova$fstatistic[1],
+    resultsAnova$fstatistic[2],
+    resultsAnova$fstatistic[3],
+    lower.tail=FALSE)),digits=3)
+overallTest
+
+type3Test <- resultsType3[c(2,3),]
+type3Test
+
+
+```
+Note the highly significant mother effect.
+
+We now also obtain a significant gender effect.
+
+Many degrees of freedom are spent to the estimation of the mother effect, which is not even of interest.
+
+```{r}
+
+#Adding mothers as a random effect
+library(lme4)
+resultsMixed <- lmer(DORS ~ SEX + (1| MOTHC), data=lizard)
+summary(resultsMixed)
+anova(resultsMixed)
+
+tab <- tab_model(resultsMixed)
+tab
+
+
+library(lme4)
+resultsMixed <- lmer(DORS ~ SEX + (1|MOTHC), data=lizard)
+summary(resultsMixed)
+anova(resultsMixed)
+
+tab <- tab_model(resultsMixed)
+tab
+
+
+```
+
+
+
+```{r}
+library(nlme)
+# Parameter estimates:
+resultMixed<-summary(lme(DORS~SEX , random = ~1|MOTHC, data = lizard)) 
+fixEffSolution<-resultMixed$tTable
+fixEffSolution
+# Type 3 tests of fixed effects:
+
+type3Results <- anova.lme(resultMixed,type="marginal") 
+type3Results # to see in the environment
+
+# t-test
+t.test(DORS ~ SEX, data = lizard)
+# Covariance parameter estimates 
+
+covParEst<-VarCorr(resultMixed) 
+rownames(covParEst) <-c("MOTHC","Residual") 
+covParEst
+
+# OR 
+
+modelmixed <- lmer(DORS~SEX + (1|MOTHC), data = lizard)
+modelmixed
+tab <- tab_model(modelmixed)
+tab
+
+```
+ ICC = 0.44 variance explained when you correct for gender
+ 
+```{r}
+modelmixed <- lmer(DORS ~ (1|MOTHC), data = lizard)
+modelmixed
+tab <- tab_model(modelmixed)
+tab
+```
+ ICC 0.41 variance explained without taking into account gender
+ 
+ 
+
+
+
+
+
+

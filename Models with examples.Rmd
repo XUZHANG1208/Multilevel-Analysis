@@ -1,0 +1,96 @@
+---
+title: "Dictionary for MLM"
+author: "RSiugzdaite"
+date: "2024-09-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Models in R
+
+Let's download a dataset that we can practice some models
+
+```{r }
+library(lme4)
+library(Matrix)
+
+setwd("~/Documents/JOB/UANTWERPEN/FLAMES/Multilevel/Data")
+siiData <- read.table("SII.txt",header=T)
+siiData$schoolid<-as.factor(siiData$schoolid)
+siiData$classid<-as.factor(siiData$classid)
+siiData$childid<-as.factor(siiData$childid)
+siiData$sex<-as.factor(siiData$sex)
+levels(siiData$sex)<-c("male","female")
+```
+
+## t-test
+
+To use t-test we need independent measurement.For example between male and female.
+
+```{r, echo=FALSE}
+plot(mathgain ~ sex, data = siiData)
+t.test(siiData$mathgain ~ siiData$sex)
+
+```
+We see there is no differences between girls and boys in mathgain.
+
+There are no data of measurements before and after, so there is no need to use paired t-test here. 
+
+But in case if we would be using paired t-test, the equation would be the same: t.test(Y ~ X,  paired = TRUE)
+
+In case of ses
+
+```{r}
+
+siiData$yearstea <- as.factor(siiData$yearstea)
+plot(mathgain ~ yearstea, data = siiData)
+fit <- lm(mathgain ~ yearstea, data = siiData)
+anova(fit)
+summary(fit)
+
+```
+Linear regression is about two continues variables, their linear relationship.
+
+```{r}
+
+plot(mathgain ~ ses, data = siiData)
+fit <- lm(mathgain ~ ses, data = siiData)
+summary(fit)
+plot(fit)
+
+```
+
+
+```{r}
+
+allSchool<-unique(siiData$schoolid)
+nSchool<-length(allSchool)
+
+plot(as.numeric(siiData$schoolid),siiData$mathgain,type="n",xlab="School ID",ylab="Mathgain",main="Mathgain by school")
+
+for (i in 1:nSchool){
+  tmp<-siiData[siiData$schoolid==allSchool[i],]
+  tmp$schoolid<-as.numeric(tmp$schoolid)
+  
+  #mean for the males	
+  tmpMale<-tmp[tmp$sex=="male",]
+  points(allSchool[i],mean(tmpMale$mathgain),pch=16)
+  
+  #mean for the females
+  tmpFemale<-tmp[tmp$sex=="female",]
+  points(allSchool[i],mean(tmpFemale$mathgain),pch=1)
+}
+
+model<-lme(mathgain~sex,random=~1|schoolid,data=siiData)
+anova.lme(model)
+summary(model)
+
+#the same thing in a different way
+
+
+
+```
+
