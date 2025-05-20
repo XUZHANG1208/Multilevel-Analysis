@@ -46,6 +46,7 @@ for (i in 1:nNail){
 
 ```
 ## step 5 plot nailbig vs. time
+always remember to plot the nailbig values of individuals. This task request the plotting of individual nailbig values changing over time. So, we should better plot it with lines to show the diachronic change, but it doesn't hurt to add points as well. 
 ```{r}
 allNail<-unique(toenailData$id)
 nNail<-length(allNail)
@@ -91,8 +92,8 @@ for (i in 1:nNail){
 ```
 
 ## step 8 
-starting with linear model bacause nailbig grew with time
-ANOVA identifies which factors are important - independent variables - time and treatment 
+starting with linear model because nailbig grew with time
+ANOVA identifies which factors are important - independent variables (time and treatment) 
 interaction model: whether time and treatment interacts to influence nailbig values 
-selecting the fixed and random effects to see modeling 
+-- she will also share the file with models
 
