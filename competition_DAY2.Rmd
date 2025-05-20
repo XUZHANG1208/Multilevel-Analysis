@@ -1,0 +1,89 @@
+---
+title: "competition1"
+output: html_document
+date: "2025-05-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##step1 import data
+
+```{r cars}
+toenailData <- read.table("toenail.txt",header=T)
+```
+
+## step3 decide which variables are factors 
+
+```{r pressure, echo=FALSE}
+toenailData$id<-as.factor(toenailData$id)
+toenailData$treat<-as.factor(toenailData$treat)
+toenailData$center<-as.factor(toenailData$center)
+toenailData$time<-as.factor(toenailData$time)
+levels(toenailData$treat)<-c("1","2")
+```
+
+## step4 plot nailbig vs. is and check on object variability 
+
+```{r}
+allNail<-unique(toenailData$id)
+nNail<-length(allNail)
+
+plot(as.numeric(toenailData$id),toenailData$nailbig,type="n",xlab="ID",
+     ylab="Nailbig",main="Nailbig by ID", ylim =c(-0,25))
+
+
+for (i in 1:nNail){
+  tmp<-toenailData[toenailData$id==allNail[i],]
+  tmp$id<-as.numeric(tmp$id)
+  points(allNail[i],mean(tmp$nailbig),pch=1)
+}  
+
+
+```
+## step 5 plot nailbig vs. time
+```{r}
+allNail<-unique(toenailData$time)
+nNail<-length(allNail)
+
+plot(as.numeric(toenailData$time),toenailData$nailbig,type="n",xlab="time",
+     ylab="Nailbig",main="Nailbig by time", ylim =c(-0,25))
+
+
+for (i in 1:nNail){
+  tmp<-toenailData[toenailData$time==allNail[i],]
+  tmp$id<-as.numeric(tmp$time)
+  points(allNail[i],mean(tmp$nailbig),pch=1)
+}  
+```
+
+## step 6 comparing two treatments - independent t-test 
+
+```{r}
+
+t.test(toenailData$nailbig ~ toenailData$treat)
+```
+
+
+##step 7 visualize effect in time of the treatment 1 and treatment 2
+```{r}
+
+allNail<-unique(toenailData$id)
+nNail<-length(allNail)
+
+toenailData$time <- as.numeric(toenailData$time)
+
+plot(toenailData$nailbig~toenailData$time,type="n",xlab="time",
+     ylab="Nailbig",main="Nailbig by time")
+
+
+for (i in 1:nNail){
+  tmp<-toenailData[toenailData$id==allNail[i],]
+  points(tmp$nailbig ~ tmp$time, col = tmp$treat,pch=1)
+  lines(tmp$nailbig ~ tmp$time, col = tmp$treat,pch=1)
+} 
+```
+
+## step 8 
+
