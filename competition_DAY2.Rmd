@@ -14,6 +14,9 @@ knitr::opts_chunk$set(echo = TRUE)
 toenailData <- read.table("toenail.txt",header=T)
 ```
 
+## discussing variables (hierachical/correlat?)
+longitudinal
+
 ## step3 decide which variables are factors 
 
 ```{r pressure, echo=FALSE}
@@ -24,7 +27,7 @@ toenailData$time<-as.factor(toenailData$time)
 levels(toenailData$treat)<-c("1","2")
 ```
 
-## step4 plot nailbig vs. is and check on object variability 
+## step4 plot nailbig vs. id and check on object variability 
 
 ```{r}
 allNail<-unique(toenailData$id)
@@ -44,18 +47,20 @@ for (i in 1:nNail){
 ```
 ## step 5 plot nailbig vs. time
 ```{r}
-allNail<-unique(toenailData$time)
+allNail<-unique(toenailData$id)
 nNail<-length(allNail)
 
-plot(as.numeric(toenailData$time),toenailData$nailbig,type="n",xlab="time",
-     ylab="Nailbig",main="Nailbig by time", ylim =c(-0,25))
+toenailData$time <- as.numeric(toenailData$time)
+
+plot(toenailData$nailbig~toenailData$time,type="n",xlab="time",
+     ylab="Nailbig",main="Nailbig by time")
 
 
 for (i in 1:nNail){
-  tmp<-toenailData[toenailData$time==allNail[i],]
-  tmp$id<-as.numeric(tmp$time)
-  points(allNail[i],mean(tmp$nailbig),pch=1)
-}  
+  tmp<-toenailData[toenailData$id==allNail[i],]
+  lines(tmp$nailbig ~ tmp$time,pch=1)
+  points(tmp$nailbig ~ tmp$time,pch=1)
+} 
 ```
 
 ## step 6 comparing two treatments - independent t-test 
@@ -86,4 +91,8 @@ for (i in 1:nNail){
 ```
 
 ## step 8 
+starting with linear model bacause nailbig grew with time
+ANOVA identifies which factors are important - independent variables - time and treatment 
+interaction model: whether time and treatment interacts to influence nailbig values 
+selecting the fixed and random effects to see modeling 
 
