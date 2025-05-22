@@ -1,0 +1,88 @@
+---
+title: "competition_day3"
+output: html_document
+date: "2025-05-22"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## data reading
+reading .sav files could be donw without code
+
+##galo score difference between genders
+```{r}
+par(mfrow = c(3,3))
+plot(galo ~ sex, data = Galo, col=sex)
+plot(galo ~ advice, data = Galo)
+plot(galo ~ feduc, data = Galo)
+plot(galo ~ meduc, data = Galo)
+plot(galo ~ focc, data = Galo)
+plot(galo ~ denom, data = Galo)
+```
+
+
+## assigning factors
+
+```{r}
+Galo$school <-as.factor(Galo$school)
+Galo$sex<-as.factor(Galo$sex)
+Galo$advice<-as.factor(Galo$advice)
+Galo$feduc<-as.factor(Galo$feduc)
+Galo$meduc<-as.factor(Galo$meduc)
+Galo$focc<-as.factor(Galo$focc)
+Galo$denom<-as.factor(Galo$denom)
+
+par(mfrow = c(1,1))
+plot(galo ~ sex, data = Galo, col=sex)
+plot(galo ~ advice, data = Galo, col=advice)
+plot(galo ~ feduc, data = Galo, col=feduc)
+plot(galo ~ meduc, data = Galo, col=meduc)
+plot(galo ~ focc, data = Galo, col=focc)
+plot(galo ~ denom, data = Galo, col=denom)
+
+```
+
+
+## testing significance of factors
+
+```{r pressure, echo=FALSE}
+t.test(galo~sex, data = Galo)
+```
+
+## lm model fitting 
+```{r}
+library(lme4)
+model_feduc <- lm(galo ~feduc, data=Galo)
+summary(model_feduc)
+```
+## other mathor education
+```{r}
+model_meduc <- lm(galo ~meduc, data=Galo)
+summary(model_meduc)
+```
+## advice vs galo
+```{r}
+Galo$advice<-as.numeric(Galo$advice)
+model_advice <- lm(advice ~ galo, data=Galo)
+summary(model_advice)
+```
+## denom
+```{r}
+model_denom <- lm(galo ~denom, data=Galo)
+summary(model_denom )
+```
+## gender and school
+```{r}
+model_g_s <- lm(galo ~sex+school, data=Galo)
+summary(model_g_s)
+```
+
+
+```{r}
+model_mix <- lmer(galo ~ sex + focc + denom + (1|feduc) +(1|meduc), data=Galo)
+summary(model_mix)
+```
+
+
