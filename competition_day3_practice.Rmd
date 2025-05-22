@@ -61,6 +61,10 @@ summary(model_feduc)
 ```{r}
 model_meduc <- lm(galo ~meduc, data=Galo)
 summary(model_meduc)
+devtools::install_github("vandomed/tab")
+library(tab)
+tab(model_meduc)
+tab
 ```
 ## advice vs galo
 ```{r}

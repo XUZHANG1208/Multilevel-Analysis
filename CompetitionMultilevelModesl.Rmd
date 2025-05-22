@@ -1,0 +1,237 @@
+---
+title: "Competition 2 Multilevel data"
+author: "Roma Siugzdaite"
+date: "2025-05-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Competition II.
+
+**Data **
+From SPSS dataset Galo.sav
+
+school - school id
+sex - (1 girl, 2 boy)
+galo - atchievement score on Galo test (Inteligence test)
+advice - advice of the teacher (0 - no subsequent school, 1- lowest, 5 - highest)
+feduc - fathers education (1 - lowest, 9- highest, 4 - missing)
+meduc - mathers education (1 - lowest, 9- highest, 3 - missing)
+facc - father occupation status (1 - lowest, 6 - highest)
+denom - denomination school ( 1- protestant, 2 - non-denominational, 3 -catholic)
+nmis - nr of missing values (0 - no, 1 - 4)
+
+
+
+**Research questions:**
+
+0. Import the data and check the variables.
+1. Is any difference in Galo score between genders? Visuals and stats.
+2. Does Galo score depend on father education? Visuals and stats.
+3. Does Galo score depend on mother education? Visuals and stats.
+4. How the advice of teachers depend on the Galo scores? Visuals and stats.
+5. Does the Galo scores depend on the denomination of the school? Visuals and stats.
+6. Are gender and type of school are important for Galo score? Visuals and model.
+7. What random effect(s) could be important for the model in question 6?
+8. How big is the variance explained and ICC? 
+9. Interpret your results!
+
+
+```{r, ECHO = TRUE}
+
+library(haven)
+Galo <- read_sav("/Users/rsiugzdaite/Documents/JOB/UANTWERPEN/FLAMES/Multilevel/Data/Competition/Galo.sav")
+head(Galo)
+
+library(ggplot2)
+library(ggpubr)
+library(sjPlot)
+library(lme4)
+
+```
+
+## Including Plots
+
+```{r , echo=FALSE}
+
+Galo$sex <- as.factor(Galo$sex)
+Galo$advice <- as.factor(Galo$advice)
+Galo$feduc <- as.factor(Galo$feduc)
+Galo$meduc <- as.factor(Galo$meduc)
+Galo$focc <- as.factor(Galo$focc)
+Galo$denom <- as.factor(Galo$denom)
+Galo$nmis <- as.factor(Galo$denom)
+
+plot(galo ~ sex, data = Galo, col = sex)
+
+plot(galo ~ school, data = Galo, col = sex)
+
+plot(galo ~ advice, data = Galo, col = advice)
+
+plot(galo ~ feduc, data = Galo)
+
+plot(galo ~ meduc, data = Galo)
+
+plot(galo ~ focc, data = Galo)
+
+plot(galo ~ denom, data = Galo)
+
+plot(galo ~ nmis, data = Galo)
+
+Galo$school <- as.factor(Galo$school)
+
+plot(galo ~ school, data = Galo)
+
+```
+
+1. Is any difference in Galo score beween genders?
+
+```{r}
+
+t.test(galo ~ sex, data = Galo)
+
+result <- lm(galo ~ sex, data = Galo)
+summary(result)
+anova(result)
+
+bxp <- ggboxplot(Galo, x = "sex", y = "galo",
+                 color = "sex", palette = "jco")
+bxp
+
+
+```
+Answer: 
+
+
+2. Does Galo score depend on fathers education? 
+
+```{r}
+
+result <- lm(galo ~ feduc, data = Galo)
+summary(result)
+anova(result)
+
+
+bxp <- ggboxplot(Galo, x = "feduc", y = "galo",
+                 color = "feduc", palette = "jco")
+bxp
+
+bxp <- ggboxplot(Galo, x = "feduc", y = "galo",
+                 color = "sex", palette = "jco")
+bxp
+
+```
+
+Answer: 
+
+
+
+3. Does Galo score depend on mothers education? 
+
+
+```{r}
+
+result <- lm(galo ~ meduc, data = Galo)
+summary(result)
+anova(result)
+
+
+bxp <- ggboxplot(Galo, x = "meduc", y = "galo",
+                 color = "meduc", palette = "jco")
+bxp
+
+bxp <- ggboxplot(Galo, x = "meduc", y = "galo",
+                 color = "sex", palette = "jco")
+bxp
+
+```
+
+Answer:
+
+
+4. How the advice of teachers depend on the Galo scores?
+
+
+```{r}
+
+result <- lm(galo ~ advice, data = Galo)
+summary(result)
+anova(result)
+
+bxp <- ggboxplot(Galo, x = "advice", y = "galo",
+                 color = "advice", palette = "jco")
+bxp
+
+bxp <- ggboxplot(Galo, x = "advice", y = "galo",
+                 color = "sex", palette = "jco")
+bxp
+```
+
+Answer:
+
+
+5. Does the Galo scores depend on the denomination of the school?
+
+```{r}
+
+result <- lm(galo ~ denom, data = Galo)
+summary(result)
+anova(result)
+
+bxp <- ggboxplot(Galo, x = "denom", y = "galo",
+                 color = "denom", palette = "jco")
+bxp
+
+bxp <- ggboxplot(Galo, x = "denom", y = "galo",
+                 color = "sex", palette = "jco")
+bxp
+```
+
+6. 
+
+```{r}
+
+result <- lm(galo ~ sex * denom , data = Galo)
+summary(result)
+anova(result)
+
+tab <- tab_model(result)
+tab
+
+
+bxp <- ggboxplot(Galo, x = "sex", y = "galo",
+                 color = "denom", palette = "jco")
+bxp
+
+
+
+
+```
+
+Answer:
+
+
+```{r}
+result <- lmer(galo ~ sex*denom + (1 |school) + (1|advice), data = Galo)
+summary(result)
+anova(result)
+
+tab <- tab_model(result)
+tab
+
+
+result <- lmer(galo ~ sex + denom +  (1 |school) + (1|advice), data = Galo)
+summary(result)
+anova(result)
+
+tab <- tab_model(result)
+tab
+
+```
+
+
+Answer:
+
